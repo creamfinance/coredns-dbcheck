@@ -56,30 +56,25 @@ func dbCheckParse(c *caddy.Controller) (string, string, bool, error) {
 		zones[i] = middleware.Host(str).Normalize()
 	}
 
-	fmt.Printf("Loading dbcheck module\n")
-
 	for c.Next() {
-		if c.Val() == "dbcheck" {
-
-			for c.NextBlock() {
-				switch c.Val() {
-				default:
-					fmt.Printf("unknown value %s %v\n", c.Val(), c.ArgErr())
-				case "database":
-					if !c.NextArg() {
-						return "", "", false, c.ArgErr()
-					}
-
-					database = c.Val()
-				case "connection_string":
-					if !c.NextArg() {
-						return "", "", false, c.ArgErr()
-					}
-
-					connectionString = c.Val()
-				case "fallthrough":
-					fall = true
+		for c.NextBlock() {
+			switch c.Val() {
+			default:
+				fmt.Printf("unknown value %s %v\n", c.Val(), c.ArgErr())
+			case "database":
+				if !c.NextArg() {
+					return "", "", false, c.ArgErr()
 				}
+
+				database = c.Val()
+			case "connection_string":
+				if !c.NextArg() {
+					return "", "", false, c.ArgErr()
+				}
+
+				connectionString = c.Val()
+			case "fallthrough":
+				fall = true
 			}
 		}
 	}

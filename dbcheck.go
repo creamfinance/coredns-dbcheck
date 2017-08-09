@@ -178,7 +178,7 @@ func (check *DbCheck) findFirstRecord(state request.Request, zone Zone, qname st
 		params_a[1] = qnames[0]
 	}
 
-	records, err := check.db.Query("SELECT id, name, ttl, "+mapTypeToFields(state.QType())+" FROM "+mapTypeToTable(state.QType())+" WHERE deleted_at is null and disable = false and zone_id = $1 and name = $2", params_a...)
+	records, err := check.db.Query("SELECT id, name, ttl, "+mapTypeToFields(state.QType())+" FROM "+mapTypeToTable(state.QType())+" WHERE deleted_at is null and disabled = false and zone_id = $1 and name = $2", params_a...)
 
 	if err != nil {
 		fmt.Printf("Error occured when looking ip "+mapTypeToTable(state.QType())+" %s\n", err)
