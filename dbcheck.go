@@ -77,6 +77,10 @@ func (check *DbCheck) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns
 		return check.failOrFallthrough(ctx, w, r, middleware.Error(check.Name(), errors.New("can only deal with ClassINET")))
 	}
 
+	if mapTypeToTable(state.QType()) == "" {
+		return check.failOrFallthrough(ctx, w, r, middleware.Error(check.Name(), errors.New("unsupported query type")))
+	}
+
 	qname := state.Name()
 
 	m := new(dns.Msg)
@@ -263,7 +267,7 @@ func mapFieldToRecords(state request.Request, zone Zone, records *sql.Rows) (int
 
 		// append the zone name
 		if mx[len(mx)-1] != '.' {
-			mx = mx + zone.name
+			mx = mx + "." + zone.name
 		}
 
 		rr := &dns.MX{
@@ -280,7 +284,7 @@ func mapFieldToRecords(state request.Request, zone Zone, records *sql.Rows) (int
 
 		// append the zone name
 		if ptr[len(ptr)-1] != '.' {
-			ptr = ptr + zone.name
+			ptr = ptr + "." + zone.name
 		}
 
 		rr := &dns.PTR{
@@ -296,7 +300,7 @@ func mapFieldToRecords(state request.Request, zone Zone, records *sql.Rows) (int
 
 		// append the zone name
 		if ns[len(ns)-1] != '.' {
-			ns = ns + zone.name
+			ns = ns + "." + zone.name
 		}
 
 		rr := &dns.NS{
@@ -332,7 +336,7 @@ func mapFieldToRecords(state request.Request, zone Zone, records *sql.Rows) (int
 
 		// append the zone name
 		if ns[len(ns)-1] != '.' {
-			ns = ns + zone.name
+			ns = ns + "." + zone.name
 		}
 
 		rr := &dns.SOA{
@@ -354,7 +358,7 @@ func mapFieldToRecords(state request.Request, zone Zone, records *sql.Rows) (int
 
 		// append the zone name
 		if target[len(target)-1] != '.' {
-			target = target + zone.name
+			target = target + "." + zone.name
 		}
 
 		rr := &dns.SRV{
@@ -373,7 +377,7 @@ func mapFieldToRecords(state request.Request, zone Zone, records *sql.Rows) (int
 
 		// append the zone name
 		if target[len(target)-1] != '.' {
-			target = target + zone.name
+			target = target + "." +  zone.name
 		}
 
 		rr := &dns.CNAME{
