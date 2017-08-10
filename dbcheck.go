@@ -25,6 +25,7 @@ type DbCheck struct {
 	Database         string
 	ConnectionString string
 	Fallthrough      bool
+	Recursion        bool
 
 	db *sql.DB
 }
@@ -80,7 +81,7 @@ func (check *DbCheck) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns
 
 	m := new(dns.Msg)
 	m.SetReply(r)
-	m.Authoritative, m.RecursionAvailable, m.Compress = true, true, true
+	m.Authoritative, m.RecursionAvailable, m.Compress = true, false, true
 
 	/* Explicit support for
 	NS

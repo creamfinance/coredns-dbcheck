@@ -17,7 +17,7 @@ func init() {
 }
 
 func setupDbCheck(c *caddy.Controller) error {
-	database, connectionString, fallThrough, err := dbCheckParse(c)
+	database, connectionString, fallThrough, recursion, err := dbCheckParse(c)
 
 	if err != nil {
 		return middleware.Error("dbcheck", err)
@@ -34,6 +34,7 @@ func setupDbCheck(c *caddy.Controller) error {
 				Database:         database,
 				ConnectionString: connectionString,
 				Fallthrough:      fallThrough,
+				Recursion: 		  recursion,
 			}
 
 			mw.Init()
@@ -45,10 +46,11 @@ func setupDbCheck(c *caddy.Controller) error {
 	return nil
 }
 
-func dbCheckParse(c *caddy.Controller) (string, string, bool, error) {
+func dbCheckParse(c *caddy.Controller) (string, string, bool, bool, error) {
 	database := ""
 	connectionString := ""
 	fall := false
+	recursion := false
 
 	zones := make([]string, len(c.ServerBlockKeys))
 
@@ -63,23 +65,23 @@ func dbCheckParse(c *caddy.Controller) (string, string, bool, error) {
 				fmt.Printf("unknown value %s %v\n", c.Val(), c.ArgErr())
 			case "database":
 				if !c.NextArg() {
-					return "", "", false, c.ArgErr()
+					return "", "", false, false, c.ArgErr()
 				}
 
 				database = c.Val()
 			case "connection_string":
 				if !c.NextArg() {
-					return "", "", false, c.ArgErr()
+					return "", "", false, false, c.ArgErr()
 				}
 
 				connectionString = c.Val()
 			case "fallthrough":
 				fall = true
+			case "recursion":
+				recursion = true
 			}
 		}
 	}
 
-	fmt.Printf("Loaded dbcheck module: %s, %s, %s\n", database, connectionString, fall)
-
-	return database, connectionString, fall, nil
+	return database, connectionString, fall, recursion, nil
 }
