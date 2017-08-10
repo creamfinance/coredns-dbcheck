@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"math"
 
 	"github.com/coredns/coredns/middleware"
 	// "github.com/coredns/coredns/middleware/pkg/dnsutil"
@@ -33,6 +34,14 @@ type Zone struct {
 	name string
 }
 
+func min(a int, b int) int {
+	if (a < b) {
+		return a
+	}
+
+	return b
+}
+
 func (check *DbCheck) Init() error {
 	if check.Database != "" {
 		fmt.Printf("Connecting to database %s %s\n", check.Database, check.ConnectionString)
@@ -55,7 +64,7 @@ func (check *DbCheck) Init() error {
 }
 
 func (check *DbCheck) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	var rr dns.RR
+	found := false
 
 	state := request.Request{W: w, Req: r}
 
@@ -143,13 +152,17 @@ func (check *DbCheck) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns
 		}
 
 		if rrs != nil && len(rrs) > 0 {
-			rr = rrs[0].(dns.RR)
+			for _, rr := range rrs {
+				m.Answer = append(m.Answer, rr.(dns.RR))
+			}
+
+			found = true
+
 			break
 		}
 	}
 
-	if rr != nil {
-		m.Answer = append(m.Answer, rr)
+	if found {
 		state.SizeAndDo(m)
 		w.WriteMsg(m)
 
@@ -187,6 +200,8 @@ func (check *DbCheck) findFirstRecord(state request.Request, zone Zone, qname st
 
 	defer records.Close()
 
+	rrs := make([]interface{}, 0)
+
 	for records.Next() {
 		rr, err := mapFieldToRecords(state, zone, records)
 
@@ -196,8 +211,14 @@ func (check *DbCheck) findFirstRecord(state request.Request, zone Zone, qname st
 
 		fmt.Printf("Found record %+#v\n", rr)
 
-		return []interface{}{rr}, nil
+		rrs = append(rrs, rr)
 	}
+
+	if len(rrs) > 0 {
+		return rrs, nil
+	}
+
+
 
 	return nil, nil
 }
@@ -234,6 +255,23 @@ func mapFieldToRecords(state request.Request, zone Zone, records *sql.Rows) (int
 
 			return rr, nil
 		}
+	case dns.TypeMX:
+		var id, ttl, preference int64
+		var name, mx string
+		records.Scan(&id, &name, &ttl, &preference, &mx)
+
+		// append the zone name
+		if mx[len(mx)-1] != '.' {
+			mx = mx + zone.name
+		}
+
+		rr := &dns.MX{
+			Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeMX, Class: dns.ClassINET, Ttl: uint32(ttl)},
+			Preference: uint16(preference),
+			Mx: mx,
+		}
+
+		return rr, nil
 	case dns.TypePTR:
 		var id, ttl int64
 		var name, ptr string
@@ -247,6 +285,99 @@ func mapFieldToRecords(state request.Request, zone Zone, records *sql.Rows) (int
 		rr := &dns.PTR{
 			Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypePTR, Class: dns.ClassINET, Ttl: uint32(ttl)},
 			Ptr: ptr,
+		}
+
+		return rr, nil
+	case dns.TypeNS:
+		var id, ttl int64
+		var name, ns string
+		records.Scan(&id, &name, &ttl, &ns)
+
+		// append the zone name
+		if ns[len(ns)-1] != '.' {
+			ns = ns + zone.name
+		}
+
+		rr := &dns.NS{
+			Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeNS, Class: dns.ClassINET, Ttl: uint32(ttl)},
+			Ns: ns,
+		}
+
+		return rr, nil
+	case dns.TypeTXT:
+		var id, ttl int64
+		var name, txt string
+		records.Scan(&id, &name, &ttl, &txt)
+
+		var txt_len = int(math.Ceil(float64(len(txt))/float64(255)))
+
+		txts := make([]string, txt_len)
+
+		// todo test
+		for i := 0; i < txt_len; i++ {
+			txts[i] = txt[i * 255:min((i + 1) * 255, len(txt))]
+		}
+
+		rr := &dns.TXT{
+			Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: uint32(ttl)},
+			Txt: txts,
+		}
+
+		return rr, nil
+	case dns.TypeSOA:
+		var id, ttl, serial, refresh, retry, expire, minttl int64
+		var name, ns, mbox string
+		records.Scan(&id, &name, &ttl, &ns, &mbox, &serial, &refresh, &retry, &expire, &minttl)
+
+		// append the zone name
+		if ns[len(ns)-1] != '.' {
+			ns = ns + zone.name
+		}
+
+		rr := &dns.SOA{
+			Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeSOA, Class: dns.ClassINET, Ttl: uint32(ttl)},
+			Ns: ns,
+			Mbox: mbox,
+			Serial: uint32(serial),
+			Refresh: uint32(refresh),
+			Retry: uint32(retry),
+			Expire: uint32(expire),
+			Minttl: uint32(minttl),
+		}
+
+		return rr, nil
+	case dns.TypeSRV:
+		var id, ttl, priority, weight, port int64
+		var name, target string
+		records.Scan(&id, &name, &ttl, &priority, &weight, &port, &target)
+
+		// append the zone name
+		if target[len(target)-1] != '.' {
+			target = target + zone.name
+		}
+
+		rr := &dns.SRV{
+			Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeSRV, Class: dns.ClassINET, Ttl: uint32(ttl)},
+			Priority: uint16(priority),
+			Weight: uint16(weight),
+			Port: uint16(port),
+			Target: target,
+		}
+
+		return rr, nil
+	case dns.TypeCNAME:
+		var id, ttl int64
+		var name, target string
+		records.Scan(&id, &name, &ttl, &target)
+
+		// append the zone name
+		if target[len(target)-1] != '.' {
+			target = target + zone.name
+		}
+
+		rr := &dns.CNAME{
+			Hdr: dns.RR_Header{Name: state.QName(), Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: uint32(ttl)},
+			Target: target,
 		}
 
 		return rr, nil
