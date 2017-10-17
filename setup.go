@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/coredns/coredns/core/dnsserver"
-	"github.com/coredns/coredns/middleware"
+	"github.com/coredns/coredns/plugin"
 
 	"github.com/mholt/caddy"
 )
@@ -20,11 +20,11 @@ func setupDbCheck(c *caddy.Controller) error {
 	database, connectionString, fallThrough, recursion, err := dbCheckParse(c)
 
 	if err != nil {
-		return middleware.Error("dbcheck", err)
+		return plugin.Error("dbcheck", err)
 	}
 
-	dnsserver.GetConfig(c).AddMiddleware(
-		func(next middleware.Handler) middleware.Handler {
+	dnsserver.GetConfig(c).AddPlugin(
+		func(next plugin.Handler) plugin.Handler {
 
 			fmt.Printf("Initialize DBCheck\n")
 
@@ -55,7 +55,7 @@ func dbCheckParse(c *caddy.Controller) (string, string, bool, bool, error) {
 	zones := make([]string, len(c.ServerBlockKeys))
 
 	for i, str := range c.ServerBlockKeys {
-		zones[i] = middleware.Host(str).Normalize()
+		zones[i] = plugin.Host(str).Normalize()
 	}
 
 	for c.Next() {

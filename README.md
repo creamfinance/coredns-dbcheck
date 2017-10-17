@@ -4,13 +4,15 @@ This plugin allows CoreDNS to check PTR, A and AAAA in a postgres database.
 
 ## Installation
 
-Compile CoreDNS with the edited middleware.cfg
+Compile CoreDNS with the edited plugin.cfg
 
 ```
-140:dnssec:dnssec
-141:dbcheck:github.com/creamfinance/coredns-dbcheck
-150:reverse:reverse
+dnssec:dnssec
+dbcheck:github.com/creamfinance/coredns-dbcheck
+reverse:reverse
 ```
+
+It may be possible that there are vendoring conflicts, for reproduceable results build in a container and move all vendored go modules from coredns into the global GOPATH.
 
 ## Configuration
 
@@ -37,4 +39,4 @@ Merge requests for:
 - dynamic tables (without the fixed structure)
 - database support (for mysql, oracle, etc)
 
- are welcome. 
+ are welcome.

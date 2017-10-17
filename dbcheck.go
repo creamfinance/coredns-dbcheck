@@ -9,8 +9,7 @@ import (
 	"strings"
 	"math"
 
-	"github.com/coredns/coredns/middleware"
-	// "github.com/coredns/coredns/middleware/pkg/dnsutil"
+	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/request"
 
 	"github.com/miekg/dns"
@@ -20,7 +19,7 @@ import (
 )
 
 type DbCheck struct {
-	Next middleware.Handler
+	Next plugin.Handler
 
 	Database         string
 	ConnectionString string
@@ -70,15 +69,15 @@ func (check *DbCheck) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns
 	state := request.Request{W: w, Req: r}
 
 	if check.db == nil {
-		return check.failOrFallthrough(ctx, w, r, middleware.Error(check.Name(), errors.New("No db connection initialized")))
+		return check.failOrFallthrough(ctx, w, r, plugin.Error(check.Name(), errors.New("No db connection initialized")))
 	}
 
 	if state.QClass() != dns.ClassINET {
-		return check.failOrFallthrough(ctx, w, r, middleware.Error(check.Name(), errors.New("can only deal with ClassINET")))
+		return check.failOrFallthrough(ctx, w, r, plugin.Error(check.Name(), errors.New("can only deal with ClassINET")))
 	}
 
 	if mapTypeToTable(state.QType()) == "" {
-		return check.failOrFallthrough(ctx, w, r, middleware.Error(check.Name(), errors.New("unsupported query type")))
+		return check.failOrFallthrough(ctx, w, r, plugin.Error(check.Name(), errors.New("unsupported query type")))
 	}
 
 	qname := state.Name()
@@ -120,7 +119,7 @@ func (check *DbCheck) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns
 	if err != nil {
 		fmt.Printf("Error occured when looking up zone: %s\n", err)
 
-		return check.failOrFallthrough(ctx, w, r, middleware.Error(check.Name(), errors.New("Error occured when looking up zone")))
+		return check.failOrFallthrough(ctx, w, r, plugin.Error(check.Name(), errors.New("Error occured when looking up zone")))
 	}
 
 	defer zones.Close()
@@ -179,7 +178,7 @@ func (check *DbCheck) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns
 
 func (check *DbCheck) failOrFallthrough(ctx context.Context, w dns.ResponseWriter, r *dns.Msg, err error) (int, error) {
 	if check.Fallthrough {
-		return middleware.NextOrFailure(check.Name(), check.Next, ctx, w, r)
+		return plugin.NextOrFailure(check.Name(), check.Next, ctx, w, r)
 	}
 
 	return dns.RcodeServerFailure, err
