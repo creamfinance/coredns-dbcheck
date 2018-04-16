@@ -185,14 +185,15 @@ func (check *DbCheck) failOrFallthrough(ctx context.Context, w dns.ResponseWrite
 }
 
 func (check *DbCheck) findFirstRecord(state request.Request, zone Zone, qname string) ([]interface{}, error) {
-	qnames := dns.SplitDomainName(qname)
 	params_a := make([]interface{}, 2)
 	params_a[0] = zone.id
 
 	if zone.name == qname {
 		params_a[1] = "@"
 	} else {
-		params_a[1] = qnames[0]
+		match := strings.TrimRight(qname[:len(qname) - len(zone.name)], ".")
+
+		params_a[1] = match
 	}
 
 	records, err := check.db.Query("SELECT id, name, ttl, "+mapTypeToFields(state.QType())+" FROM "+mapTypeToTable(state.QType())+" WHERE deleted_at is null and disabled = false and zone_id = $1 and name = $2", params_a...)
@@ -221,8 +222,6 @@ func (check *DbCheck) findFirstRecord(state request.Request, zone Zone, qname st
 	if len(rrs) > 0 {
 		return rrs, nil
 	}
-
-
 
 	return nil, nil
 }
