@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 	"math"
+	"context"
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/request"
 
 	"github.com/miekg/dns"
-	"golang.org/x/net/context"
 
 	_ "github.com/lib/pq"
 )
@@ -114,7 +114,7 @@ func (check *DbCheck) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns
 	sql := "SELECT id, name FROM zones WHERE deleted_at is null and disabled = false and name in (" + strings.Join(param_names, ",") + ") ORDER BY length(name) DESC"
 
 	// check for zone with that name
-	zones, err := check.db.Query(sql, params...)
+	zones, err := check.db.QueryContext(ctx, sql, params...)
 
 	if err != nil {
 		fmt.Printf("Error occured when looking up zone: %s\n", err)

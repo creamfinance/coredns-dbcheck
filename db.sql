@@ -5,9 +5,9 @@ CREATE DATABASE coredns OWNER coredns;
 
 CREATE TABLE zones (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -17,9 +17,9 @@ CREATE TABLE zones (
 
 CREATE TABLE soa_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -39,9 +39,9 @@ CREATE TABLE soa_records (
 
 CREATE TABLE a_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -55,9 +55,9 @@ CREATE TABLE a_records (
 
 CREATE TABLE aaaa_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -71,9 +71,9 @@ CREATE TABLE aaaa_records (
 
 CREATE TABLE mx_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -88,9 +88,9 @@ CREATE TABLE mx_records (
 
 CREATE TABLE ptr_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -104,9 +104,9 @@ CREATE TABLE ptr_records (
 
 CREATE TABLE cname_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -121,9 +121,9 @@ CREATE TABLE cname_records (
 
 CREATE TABLE ns_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -137,9 +137,9 @@ CREATE TABLE ns_records (
 
 CREATE TABLE srv_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
@@ -151,14 +151,14 @@ CREATE TABLE srv_records (
 	priority    int,
 	weight 		int,
 	port 		int,
-	target      varchar(65536)
+	target      varchar(255)
 );
 
 CREATE TABLE txt_records (
 	id 			SERIAL PRIMARY KEY,
-	created_at	timestamp without time zone,
-	updated_at	timestamp without time zone,
-	deleted_at	timestamp without time zone,
+	created_at	timestamp with time zone,
+	updated_at	timestamp with time zone,
+	deleted_at	timestamp with time zone,
 
 	disabled	boolean,
 
